@@ -163,19 +163,22 @@
   }
   .op-row { margin-bottom:4px; }
   .op-resource-row {
-    display:flex; gap:8px; align-items:center;
+    display:flex; flex-wrap:wrap; gap:5px; align-items:center;
     padding:4px 0 6px 32px;
   }
-  .resource-select-sm {
-    padding:5px 8px; border:1px solid var(--border); border-radius:5px;
-    font-family:inherit; font-size:0.76rem; background:var(--surface);
-    color:var(--text); max-width:260px;
+  .res-check {
+    display:flex; align-items:center; gap:4px;
+    padding:3px 8px; border-radius:14px;
+    border:1px solid var(--border); background:var(--surface);
+    cursor:pointer; font-size:0.72rem; user-select:none;
+    transition:all 0.15s;
   }
-  .resource-select-sm:focus { outline:none; border-color:var(--accent); }
+  .res-check input { display:none; }
+  .res-check.checked { background:var(--accent); color:white; border-color:var(--accent); }
   .resource-custom-sm {
-    padding:5px 8px; border:1px solid var(--accent); border-radius:5px;
-    font-family:inherit; font-size:0.76rem; background:var(--accent-light);
-    color:var(--text); max-width:200px;
+    padding:4px 8px; border:1px solid var(--accent); border-radius:5px;
+    font-family:inherit; font-size:0.73rem; background:var(--accent-light);
+    color:var(--text); width:160px;
   }
   .resource-custom-sm:focus { outline:none; box-shadow:0 0 0 3px rgba(180,83,9,0.1); }
   .resource-custom-sm::placeholder { color:#b0a090; }
@@ -358,7 +361,7 @@
     </div>
     <div class="form-row">
       <div class="form-group"><label>Académie</label><input type="text" id="academie" value="Paris"></div>
-      <div class="form-group"><label>Établissement</label><input type="text" id="etablissement" placeholder="ex : Albert de Mun"></div>
+      <div class="form-group"><label>Établissement</label><input type="text" id="etablissement" value="Albert de Mun"></div>
       <div class="form-group"><label>Session</label><input type="text" id="session" value="2026"></div>
     </div>
   </div>
@@ -426,7 +429,7 @@ const SECTIONS = [
   { title:"Mise en œuvre des règles d'hygiène, de sécurité au travail et de gestion durable des ressources", comps:['c4','c5'] }
 ];
 
-const RESOURCE_TYPES = ["document (fiche technique, etc.)","photographie","vidéo","enregistrement audio","autre support"];
+const RESOURCE_TYPES = ["document","photographie","vidéo","audio","autre support"];
 
 let activities = [];
 let nextId = 1;
@@ -434,7 +437,7 @@ let nextId = 1;
 let opsChecked = {};
 COMPETENCES.forEach(c => {
   opsChecked[c.id] = {};
-  c.ops.forEach((_, i) => { opsChecked[c.id][i] = { checked:false, resource:'', resourceCustom:'' }; });
+  c.ops.forEach((_, i) => { opsChecked[c.id][i] = { checked:false, resources:[], resourceCustom:'' }; });
 });
 
 function addActivity(name='', comps={c1:false,c2:false,c3:false,c4:false,c5:false}) {
@@ -502,11 +505,13 @@ function renderOpsDetail() {
           – ${esc(op)}
         </label>
         ${checked ? `<div class="op-resource-row">
-          <select class="resource-select-sm" onchange="updOpRes('${comp.id}',${i},this.value)">
-            <option value="">Type de ressource…</option>
-            ${RESOURCE_TYPES.map(r=>`<option value="${r}" ${opData.resource===r?'selected':''}>${r}</option>`).join('')}
-          </select>
-          ${opData.resource==='autre support'?`<input type="text" class="resource-custom-sm" value="${esc(opData.resourceCustom||'')}"
+          ${RESOURCE_TYPES.map(r => {
+            const isOn = opData.resources.includes(r);
+            return `<div class="res-check ${isOn?'checked':''}" onclick="togOpRes('${comp.id}',${i},'${r}',this)">
+              <input type="checkbox" ${isOn?'checked':''}>${esc(r)}
+            </div>`;
+          }).join('')}
+          ${opData.resources.includes('autre support')?`<input type="text" class="resource-custom-sm" value="${esc(opData.resourceCustom||'')}"
                  placeholder="Précisez…"
                  oninput="updOpResCustom('${comp.id}',${i},this.value)">`:''}
         </div>` : ''}
@@ -519,14 +524,20 @@ function renderOpsDetail() {
 
 function togOp(cId, idx, val) {
   opsChecked[cId][idx].checked = val;
-  if(!val) { opsChecked[cId][idx].resource = ''; opsChecked[cId][idx].resourceCustom = ''; }
+  if(!val) { opsChecked[cId][idx].resources = []; opsChecked[cId][idx].resourceCustom = ''; }
   renderOpsDetail();
   updateOutput();
 }
 
-function updOpRes(cId, idx, val) {
-  opsChecked[cId][idx].resource = val;
-  if(val !== 'autre support') opsChecked[cId][idx].resourceCustom = '';
+function togOpRes(cId, idx, res, el) {
+  const opData = opsChecked[cId][idx];
+  const pos = opData.resources.indexOf(res);
+  if(pos > -1) {
+    opData.resources.splice(pos, 1);
+    if(res === 'autre support') opData.resourceCustom = '';
+  } else {
+    opData.resources.push(res);
+  }
   renderOpsDetail();
   updateOutput();
 }
@@ -605,9 +616,11 @@ function updateOutput() {
         const opData = opsChecked[cId][oi];
         const opCov = gCov && opData.checked;
         let resLabel = '';
-        if(opData.resource) {
-          resLabel = opData.resource==='autre support' && opData.resourceCustom
-            ? 'autre : '+opData.resourceCustom : opData.resource;
+        if(opData.resources && opData.resources.length) {
+          resLabel = opData.resources.map(r => {
+            if(r === 'autre support' && opData.resourceCustom) return 'autre : '+opData.resourceCustom;
+            return r;
+          }).join(', ');
         }
         if (oi === 0) {
           h += `<tr>
