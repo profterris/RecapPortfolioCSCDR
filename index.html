@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS CDR – Tableau récapitulatif EP2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0eb;
+    --surface: #ffffff;
+    --surface-alt: #faf8f5;
+    --border: #e0d8cf;
+    --border-strong: #c4b8a8;
+    --text: #2c2417;
+    --text-muted: #7a6e5f;
+    --accent: #b45309;
+    --accent-light: #fef3c7;
+    --accent-hover: #92400e;
+    --success: #166534;
+    --success-bg: #dcfce7;
+    --danger: #991b1b;
+    --danger-bg: #fee2e2;
+    --c1: #1e40af;
+    --c2: #7e22ce;
+    --c3: #0f766e;
+    --c4: #b45309;
+    --c5: #166534;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  .container { max-width:1100px; margin:0 auto; padding:24px 20px 60px; }
+
+  header {
+    text-align:center; margin-bottom:32px; padding:28px 24px;
+    background:var(--surface); border-radius:var(--radius);
+    border:1px solid var(--border); box-shadow:var(--shadow);
+  }
+  header h1 { font-size:1.3rem; font-weight:700; letter-spacing:-0.02em; margin-bottom:4px; }
+  header p { font-size:0.82rem; color:var(--text-muted); }
+
+  .section {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); padding:24px; margin-bottom:20px;
+    box-shadow:var(--shadow);
+  }
+  .section-title {
+    font-size:0.78rem; font-weight:600; text-transform:uppercase;
+    letter-spacing:0.06em; color:var(--text-muted);
+    margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid var(--border);
+  }
+  .form-row {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    gap:12px; margin-bottom:12px;
+  }
+  .form-group label {
+    display:block; font-size:0.76rem; font-weight:500;
+    color:var(--text-muted); margin-bottom:4px;
+  }
+  .form-group input, .form-group select {
+    width:100%; padding:8px 12px; border:1px solid var(--border);
+    border-radius:6px; font-family:inherit; font-size:0.86rem;
+    background:var(--surface-alt); color:var(--text); transition:border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline:none; border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(180,83,9,0.1);
+  }
+
+  /* Activities */
+  .activity-card {
+    background:var(--surface-alt); border:1px solid var(--border);
+    border-radius:var(--radius); padding:16px; margin-bottom:12px;
+    position:relative; transition:box-shadow 0.2s;
+  }
+  .activity-card:hover { box-shadow:var(--shadow-lg); }
+  .activity-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .activity-number {
+    width:26px; height:26px; border-radius:50%;
+    background:var(--accent); color:white;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.75rem; font-weight:700; flex-shrink:0;
+  }
+  .activity-name-input {
+    flex:1; padding:7px 12px; border:1px solid var(--border);
+    border-radius:6px; font-family:inherit; font-size:0.88rem;
+    font-weight:500; background:var(--surface);
+  }
+  .activity-name-input:focus {
+    outline:none; border-color:var(--accent);
+    box-shadow:0 0 0 3px rgba(180,83,9,0.1);
+  }
+  .activity-name-input::placeholder { color:#bbb; }
+
+  .competences-grid { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+  .comp-check {
+    display:flex; align-items:center; gap:5px;
+    padding:4px 10px; border-radius:20px;
+    border:1px solid var(--border); background:var(--surface);
+    cursor:pointer; font-size:0.73rem; font-weight:500;
+    transition:all 0.15s; user-select:none;
+  }
+  .comp-check.c1 { --comp-color:var(--c1); }
+  .comp-check.c2 { --comp-color:var(--c2); }
+  .comp-check.c3 { --comp-color:var(--c3); }
+  .comp-check.c4 { --comp-color:var(--c4); }
+  .comp-check.c5 { --comp-color:var(--c5); }
+  .comp-check.checked { background:var(--comp-color); color:white; border-color:var(--comp-color); }
+  .comp-dot { width:8px; height:8px; border-radius:50%; background:var(--comp-color); flex-shrink:0; }
+  .comp-check.checked .comp-dot { background:rgba(255,255,255,0.5); }
+
+  .btn-remove {
+    background:none; border:1px solid var(--border); border-radius:6px;
+    padding:6px 10px; cursor:pointer; color:var(--text-muted);
+    font-size:0.76rem; transition:all 0.15s;
+  }
+  .btn-remove:hover { background:var(--danger-bg); color:var(--danger); border-color:var(--danger); }
+  .btn-add {
+    display:flex; align-items:center; justify-content:center; gap:6px;
+    width:100%; padding:12px; border:2px dashed var(--border);
+    border-radius:var(--radius); background:transparent; cursor:pointer;
+    font-family:inherit; font-size:0.84rem; font-weight:500;
+    color:var(--text-muted); transition:all 0.2s;
+  }
+  .btn-add:hover { border-color:var(--accent); color:var(--accent); background:rgba(180,83,9,0.03); }
+
+  /* Operational competencies detail */
+  .ops-section {
+    margin-top:16px; padding-top:16px; border-top:1px solid var(--border);
+  }
+  .ops-section-title {
+    font-size:0.76rem; font-weight:600; color:var(--text-muted); margin-bottom:10px;
+  }
+  .ops-group { margin-bottom:14px; }
+  .ops-group-label {
+    font-size:0.74rem; font-weight:600; margin-bottom:6px;
+    padding:4px 8px; border-radius:4px; display:inline-block;
+  }
+  .ops-group-label.c1 { background:#dbeafe; color:var(--c1); }
+  .ops-group-label.c2 { background:#f3e8ff; color:var(--c2); }
+  .ops-group-label.c3 { background:#ccfbf1; color:var(--c3); }
+  .ops-group-label.c4 { background:#fef3c7; color:var(--c4); }
+  .ops-group-label.c5 { background:#dcfce7; color:var(--c5); }
+  .ops-group.inactive .ops-group-label { background:#f0f0f0; color:#aaa; }
+  .ops-group.inactive .op-check-label { color:#ccc; }
+
+  .op-check-label {
+    display:flex; align-items:center; gap:6px;
+    padding:3px 0 3px 12px; font-size:0.76rem; cursor:pointer;
+    user-select:none; color:var(--text);
+  }
+  .op-check-label input[type=checkbox] {
+    width:14px; height:14px; accent-color:var(--accent); cursor:pointer;
+  }
+  .op-row { margin-bottom:4px; }
+  .op-resource-row {
+    display:flex; gap:8px; align-items:center;
+    padding:4px 0 6px 32px;
+  }
+  .resource-select-sm {
+    padding:5px 8px; border:1px solid var(--border); border-radius:5px;
+    font-family:inherit; font-size:0.76rem; background:var(--surface);
+    color:var(--text); max-width:260px;
+  }
+  .resource-select-sm:focus { outline:none; border-color:var(--accent); }
+  .resource-custom-sm {
+    padding:5px 8px; border:1px solid var(--accent); border-radius:5px;
+    font-family:inherit; font-size:0.76rem; background:var(--accent-light);
+    color:var(--text); max-width:200px;
+  }
+  .resource-custom-sm:focus { outline:none; box-shadow:0 0 0 3px rgba(180,83,9,0.1); }
+  .resource-custom-sm::placeholder { color:#b0a090; }
+
+  /* Coverage */
+  .coverage-bar {
+    display:flex; gap:8px; flex-wrap:wrap; margin-top:16px;
+    padding-top:16px; border-top:1px solid var(--border);
+  }
+  .coverage-pill {
+    display:flex; align-items:center; gap:5px;
+    padding:4px 10px; border-radius:20px; font-size:0.71rem;
+    font-weight:600; border:1px solid var(--border);
+    background:var(--surface); color:var(--text-muted); transition:all 0.3s;
+  }
+  .coverage-pill.covered { background:var(--success-bg); color:var(--success); border-color:#bbf7d0; }
+  .coverage-pill.missing { background:var(--danger-bg); color:var(--danger); border-color:#fecaca; }
+
+  /* Output table - matching PDF green theme */
+  .output-table-wrapper { overflow-x:auto; margin-top:0; }
+  .output-table { width:100%; border-collapse:collapse; font-size:0.76rem; border:2px solid #333; }
+  .output-table th, .output-table td {
+    border:1px solid #999; padding:5px 7px;
+    text-align:left; vertical-align:middle;
+  }
+  .output-table thead th {
+    background:#5b8c3e; color:white; font-weight:600;
+    font-size:0.7rem; text-align:center; vertical-align:middle;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .output-table .section-header {
+    background:#5b8c3e; font-weight:700; font-size:0.74rem; color:white;
+    text-align:center;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .output-table .comp-global-cell { font-weight:600; background:#f9f9f9; }
+  .output-table .comp-op-cell { padding-left:14px; font-size:0.74rem; }
+  .output-table .check-cell { text-align:center; width:40px; font-size:0.95rem; }
+  .output-table .check-cell.yes { color:#333; }
+  .output-table .check-cell.no { color:#ccc; }
+  .output-table .activities-cell { font-size:0.73rem; }
+  .output-table .resource-cell { font-size:0.73rem; }
+
+  /* Output header - PDF green bands */
+  .output-header { margin-bottom:0; }
+  .pdf-band {
+    padding:8px 16px; text-align:center; font-weight:700;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .pdf-band-dark { background:#4a7a35; color:white; font-size:0.88rem; }
+  .pdf-band-medium { background:#5b8c3e; color:white; font-size:0.82rem; }
+  .pdf-band-light { background:#e8f0e4; color:#333; font-size:0.76rem; font-weight:600; }
+  .pdf-info-row {
+    display:flex; justify-content:space-between; padding:5px 12px;
+    border:1px solid #999; border-top:none; font-size:0.78rem;
+  }
+  .pdf-id-table {
+    width:100%; border-collapse:collapse; font-size:0.78rem;
+  }
+  .pdf-id-table td {
+    border:1px solid #999; padding:4px 10px; vertical-align:top;
+  }
+  .pdf-id-left { width:50%; vertical-align:middle; }
+  .pdf-id-header { text-align:center; font-weight:700; background:#f5f5f5;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  .pdf-id-field { padding:0 !important; }
+  .pdf-id-fields-inner { width:100%; border-collapse:collapse; }
+  .pdf-id-fields-inner td { border:none; border-bottom:1px solid #ccc; padding:3px 10px; }
+  .pdf-id-fields-inner tr:last-child td { border-bottom:none; }
+  .pdf-id-label { width:140px; color:#555; white-space:nowrap; }
+  .pdf-id-value { font-weight:600; }
+  .pdf-id-numcandidat { min-width:200px; min-height:22px; }
+  .pdf-notice {
+    border:1px solid #999; border-top:none; padding:6px 12px;
+    font-size:0.68rem; color:#444; line-height:1.4; text-align:justify;
+  }
+  .actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .btn {
+    padding:10px 18px; border:none; border-radius:6px;
+    font-family:inherit; font-size:0.84rem; font-weight:600;
+    cursor:pointer; transition:all 0.15s;
+  }
+  .btn-primary { background:var(--accent); color:white; }
+  .btn-primary:hover { background:var(--accent-hover); }
+  .btn-secondary { background:var(--surface); color:var(--text); border:1px solid var(--border); }
+  .btn-secondary:hover { background:var(--surface-alt); border-color:var(--border-strong); }
+
+  /* Legend */
+  .legend { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; font-size:0.71rem; color:var(--text-muted); }
+  .legend-item { display:flex; align-items:center; gap:4px; }
+  .legend-dot { width:9px; height:9px; border-radius:50%; }
+
+  .help-text { font-size:0.78rem; color:var(--text-muted); margin-bottom:14px; line-height:1.55; }
+
+  /* Print */
+  @media print {
+    @page { size:landscape; margin:8mm; }
+    body { background:white; font-size:9px; }
+    .no-print { display:none !important; }
+    .container { padding:0; max-width:100%; }
+    .section { box-shadow:none; border:none; padding:0; margin:0; }
+    .output-table { font-size:8.5px; }
+    .output-table th { font-size:7px; padding:3px 4px; }
+    .output-table td { padding:3px 5px; }
+    .output-table .comp-op-cell { padding-left:10px; font-size:8px; }
+    .output-table .check-cell { font-size:11px; width:28px; }
+    .output-table .activities-cell, .output-table .resource-cell { font-size:8px; }
+    .output-table th, .output-table .section-header,
+    .pdf-band-dark, .pdf-band-medium, .pdf-band-light,
+    .output-table .comp-global-cell {
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    }
+    .output-table .comp-global-cell { background:#f9f9f9 !important; }
+    .pdf-band { padding:4px 10px; }
+    .pdf-band-dark { font-size:10px; }
+    .pdf-band-medium { font-size:9px; }
+    .pdf-band-light { font-size:8px; }
+    .pdf-info-row { padding:3px 10px; font-size:8.5px; }
+    .pdf-identity { padding:3px 10px; font-size:8.5px; }
+    .pdf-notice { padding:3px 10px; font-size:7px; }
+    .pdf-id-table td { padding:2px 8px; font-size:8px; }
+    .pdf-id-fields-inner td { padding:1px 8px; }
+    .pdf-id-label { width:110px; }
+    .pdf-id-numcandidat { min-height:18px; }
+    .pdf-id-header { background:#f5f5f5 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+
+  .toast {
+    position:fixed; bottom:24px; right:24px;
+    background:var(--success); color:white;
+    padding:12px 20px; border-radius:var(--radius);
+    font-size:0.84rem; font-weight:500; box-shadow:var(--shadow-lg);
+    transform:translateY(80px); opacity:0; transition:all 0.3s ease; z-index:100;
+  }
+  .toast.show { transform:translateY(0); opacity:1; }
+
+  .step-indicator {
+    display:flex; gap:0; margin-bottom:24px;
+  }
+  .step {
+    flex:1; text-align:center; padding:10px 8px;
+    font-size:0.75rem; font-weight:600;
+    background:var(--surface-alt); border:1px solid var(--border);
+    color:var(--text-muted); position:relative;
+  }
+  .step:first-child { border-radius:var(--radius) 0 0 var(--radius); }
+  .step:last-child { border-radius:0 var(--radius) var(--radius) 0; }
+  .step.active { background:var(--accent); color:white; border-color:var(--accent); }
+  .step .step-num {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:20px; height:20px; border-radius:50%;
+    background:rgba(0,0,0,0.1); font-size:0.7rem; margin-right:4px;
+  }
+  .step.active .step-num { background:rgba(255,255,255,0.25); }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <header class="no-print">
+    <h1>Certificat de spécialisation – Desserts de restaurant</h1>
+    <p>Épreuve EP2 – Tableau récapitulatif des compétences du pôle 2</p>
+  </header>
+
+  <div class="step-indicator no-print">
+    <div class="step active" id="step1"><span class="step-num">1</span>Identité</div>
+    <div class="step active" id="step2"><span class="step-num">2</span>Activités</div>
+    <div class="step active" id="step3"><span class="step-num">3</span>Compétences opérationnelles</div>
+    <div class="step active" id="step4"><span class="step-num">4</span>Tableau final</div>
+  </div>
+
+  <!-- 1. Identité -->
+  <div class="section no-print">
+    <div class="section-title">1 · Identité du candidat</div>
+    <div class="form-row">
+      <div class="form-group"><label>Nom</label><input type="text" id="nom" placeholder="ex : Dupont"></div>
+      <div class="form-group"><label>Prénom</label><input type="text" id="prenom" placeholder="ex : Marie"></div>
+      <div class="form-group"><label>N° candidat</label><input type="text" id="numcandidat" placeholder="facultatif"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Académie</label><input type="text" id="academie" value="Paris"></div>
+      <div class="form-group"><label>Établissement</label><input type="text" id="etablissement" placeholder="ex : Albert de Mun"></div>
+      <div class="form-group"><label>Session</label><input type="text" id="session" value="2026"></div>
+    </div>
+  </div>
+
+  <!-- 2. Activités -->
+  <div class="section no-print">
+    <div class="section-title">2 · Activités du portfolio</div>
+    <p class="help-text">
+      Listez chaque activité de votre portfolio. Pour chacune, cochez les compétences globales qu'elle couvre et indiquez le type de ressource utilisé.
+    </p>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c1)"></div> C1 – S'approprier les desserts</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c2)"></div> C2 – Créer un dessert</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c3)"></div> C3 – Approvisionnements</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c4)"></div> C4 – Hygiène / sécurité</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c5)"></div> C5 – Gestion durable</div>
+    </div>
+    <div id="activities-list"></div>
+    <button class="btn-add" onclick="addActivity()"><span style="font-size:1.1rem;">+</span> Ajouter une activité</button>
+    <div class="coverage-bar" id="coverage-bar"></div>
+  </div>
+
+  <!-- 3. Compétences opérationnelles -->
+  <div class="section no-print">
+    <div class="section-title">3 · Compétences opérationnelles</div>
+    <p class="help-text">
+      Pour chaque compétence globale couverte, précisez quelles compétences opérationnelles sont abordées dans votre portfolio.
+    </p>
+    <div id="ops-detail"></div>
+  </div>
+
+  <!-- 4. Tableau -->
+  <div class="section" id="output-section">
+    <div class="section-title no-print">4 · Tableau récapitulatif</div>
+    <div class="output-header" id="output-header"></div>
+    <div class="output-table-wrapper">
+      <table class="output-table" id="output-table"></table>
+    </div>
+    <div class="actions no-print" style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="window.print()">Imprimer / PDF</button>
+      <button class="btn btn-secondary" onclick="copyTable()">Copier le tableau</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const COMPETENCES = [
+  { id:'c1', global:"S'approprier les desserts de la carte",
+    ops:["Produire les desserts de la carte"] },
+  { id:'c2', global:"Participer à la création d'un dessert",
+    ops:["Créer un dessert","Sélectionner et quantifier des ingrédients","Collaborer à la définition d'un argumentaire de vente"] },
+  { id:'c3', global:"Participer aux approvisionnements",
+    ops:["Identifier des besoins de matières premières","Contrôler et déconditionner une livraison","Stocker les livraisons"] },
+  { id:'c4', global:"Appliquer les règles d'hygiène, de sécurité alimentaire et de sécurité au travail",
+    ops:["Appliquer les règles d'hygiène","Appliquer les règles de sécurité alimentaire","Appliquer les mesures de prévention et de sécurité au travail"] },
+  { id:'c5', global:"Mettre en œuvre les préconisations en matière de gestion durable des ressources",
+    ops:["Appliquer les préconisations en matière de gestion durable des ressources"] }
+];
+
+const SECTIONS = [
+  { title:"Participation à l'élaboration de la carte des desserts", comps:['c1','c2'] },
+  { title:"Participation aux approvisionnements", comps:['c3'] },
+  { title:"Mise en œuvre des règles d'hygiène, de sécurité au travail et de gestion durable des ressources", comps:['c4','c5'] }
+];
+
+const RESOURCE_TYPES = ["document (fiche technique, etc.)","photographie","vidéo","enregistrement audio","autre support"];
+
+let activities = [];
+let nextId = 1;
+// opsChecked: { c1: { 0: true/false }, c2: { 0: true, 1: false, 2: true }, ... }
+let opsChecked = {};
+COMPETENCES.forEach(c => {
+  opsChecked[c.id] = {};
+  c.ops.forEach((_, i) => { opsChecked[c.id][i] = { checked:false, resource:'', resourceCustom:'' }; });
+});
+
+function addActivity(name='', comps={c1:false,c2:false,c3:false,c4:false,c5:false}) {
+  const id = nextId++;
+  activities.push({ id, name, comps:{...comps} });
+  renderActivities();
+  updateAll();
+}
+
+function removeActivity(id) {
+  activities = activities.filter(a => a.id !== id);
+  renderActivities();
+  updateAll();
+}
+
+function renderActivities() {
+  const list = document.getElementById('activities-list');
+  list.innerHTML = '';
+  activities.forEach((act, idx) => {
+    const card = document.createElement('div');
+    card.className = 'activity-card';
+    card.innerHTML = `
+      <div class="activity-header">
+        <div class="activity-number">${idx+1}</div>
+        <input class="activity-name-input" type="text" value="${esc(act.name)}"
+               placeholder="Nom de l'activité (ex : pavlova exotique)"
+               oninput="updName(${act.id},this.value)">
+        <button class="btn-remove" onclick="removeActivity(${act.id})">✕</button>
+      </div>
+      <div class="competences-grid">
+        ${['c1','c2','c3','c4','c5'].map((c,i) => `
+          <div class="comp-check ${c} ${act.comps[c]?'checked':''}" onclick="togComp(${act.id},'${c}',this)">
+            <span class="comp-dot"></span> C${i+1}
+          </div>`).join('')}
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function updName(id,v) { const a=activities.find(x=>x.id===id); if(a){a.name=v; updateAll();} }
+function togComp(id,c,el) {
+  const a=activities.find(x=>x.id===id); if(!a) return;
+  a.comps[c]=!a.comps[c];
+  el.classList.toggle('checked',a.comps[c]);
+  updateAll();
+}
+
+function isGlobalCovered(cId) { return activities.some(a => a.comps[cId]); }
+
+function renderOpsDetail() {
+  const container = document.getElementById('ops-detail');
+  container.innerHTML = '';
+  COMPETENCES.forEach(comp => {
+    const covered = isGlobalCovered(comp.id);
+    const grp = document.createElement('div');
+    grp.className = 'ops-group' + (covered ? '' : ' inactive');
+    let html = `<div class="ops-group-label ${comp.id}">${esc(comp.global)}${covered ? '' : ' – non couverte'}</div>`;
+    comp.ops.forEach((op, i) => {
+      const opData = opsChecked[comp.id][i];
+      const checked = opData.checked && covered;
+      html += `<div class="op-row">
+        <label class="op-check-label">
+          <input type="checkbox" ${checked?'checked':''} ${covered?'':'disabled'}
+                 onchange="togOp('${comp.id}',${i},this.checked)">
+          – ${esc(op)}
+        </label>
+        ${checked ? `<div class="op-resource-row">
+          <select class="resource-select-sm" onchange="updOpRes('${comp.id}',${i},this.value)">
+            <option value="">Type de ressource…</option>
+            ${RESOURCE_TYPES.map(r=>`<option value="${r}" ${opData.resource===r?'selected':''}>${r}</option>`).join('')}
+          </select>
+          ${opData.resource==='autre support'?`<input type="text" class="resource-custom-sm" value="${esc(opData.resourceCustom||'')}"
+                 placeholder="Précisez…"
+                 oninput="updOpResCustom('${comp.id}',${i},this.value)">`:''}
+        </div>` : ''}
+      </div>`;
+    });
+    grp.innerHTML = html;
+    container.appendChild(grp);
+  });
+}
+
+function togOp(cId, idx, val) {
+  opsChecked[cId][idx].checked = val;
+  if(!val) { opsChecked[cId][idx].resource = ''; opsChecked[cId][idx].resourceCustom = ''; }
+  renderOpsDetail();
+  updateOutput();
+}
+
+function updOpRes(cId, idx, val) {
+  opsChecked[cId][idx].resource = val;
+  if(val !== 'autre support') opsChecked[cId][idx].resourceCustom = '';
+  renderOpsDetail();
+  updateOutput();
+}
+
+function updOpResCustom(cId, idx, val) {
+  opsChecked[cId][idx].resourceCustom = val;
+  updateOutput();
+}
+
+function updateCoverage() {
+  const bar = document.getElementById('coverage-bar');
+  const labels = ["C1 – S'approprier","C2 – Créer","C3 – Approvisionner","C4 – Hygiène","C5 – Durable"];
+  const ids = ['c1','c2','c3','c4','c5'];
+  bar.innerHTML = ids.map((c,i) => {
+    const ok = isGlobalCovered(c);
+    return `<span class="coverage-pill ${ok?'covered':'missing'}">
+      <span>${ok?'✓':'✗'}</span> ${labels[i]}
+    </span>`;
+  }).join('');
+}
+
+function updateAll() {
+  updateCoverage();
+  renderOpsDetail();
+  updateOutput();
+}
+
+function updateOutput() {
+  const nom=v('nom'), prenom=v('prenom'), num=v('numcandidat'),
+        acad=v('academie'), etab=v('etablissement'), sess=v('session');
+
+  document.getElementById('output-header').innerHTML = `
+    <div class="pdf-band pdf-band-dark">Certificat de spécialisation Cuisinier en Desserts de Restaurant - Épreuve EP2</div>
+    <div class="pdf-band pdf-band-medium">Pôle 2 : Optimisation et gestion de la production des desserts</div>
+    <div class="pdf-band pdf-band-light">Tableau récapitulatif des compétences (à renseigner par le candidat)</div>
+    <div class="pdf-info-row">
+      <span>Académie de : <strong>${esc(acad)}</strong></span>
+      <span>Session : <strong>${esc(sess)}</strong></span>
+    </div>
+    <table class="pdf-id-table">
+      <tr>
+        <td class="pdf-id-left" rowspan="3">Établissement : <strong>${esc(etab)}</strong></td>
+        <td class="pdf-id-header">Candidat</td>
+      </tr>
+      <tr>
+        <td class="pdf-id-field">
+          <table class="pdf-id-fields-inner">
+            <tr><td class="pdf-id-label">Nom :</td><td class="pdf-id-value">${esc(nom)}</td></tr>
+            <tr><td class="pdf-id-label">Prénom :</td><td class="pdf-id-value">${esc(prenom)}</td></tr>
+            <tr><td class="pdf-id-label">Numéro du candidat :</td><td class="pdf-id-value pdf-id-numcandidat">${esc(num)}</td></tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+    <div class="pdf-notice">Les supports présents dans le portfolio doivent couvrir obligatoirement les compétences globales figurant dans le tableau ci-dessous. Une même activité peut être en lien avec plusieurs compétences. Chaque compétence globale doit être abordée et pour chacune d'entre elles, une ou plusieurs compétences opérationnelles seront traitées.</div>`;
+
+  const t = document.getElementById('output-table');
+  let h = `<thead><tr>
+    <th>Compétences globales</th>
+    <th style="width:60px">Cocher si la compétence globale figure dans le portfolio</th>
+    <th>Liste des compétences opérationnelles correspondantes</th>
+    <th style="width:60px">Cocher les compétences opérationnelles abordées dans le portfolio</th>
+    <th>Indiquer les activités présentées</th>
+    <th>Indiquer le(s) type(s) de ressource (audio, fichier, vidéo…)</th>
+  </tr></thead><tbody>`;
+
+  SECTIONS.forEach(sec => {
+    h += `<tr><td class="section-header" colspan="6">${esc(sec.title)}</td></tr>`;
+    sec.comps.forEach(cId => {
+      const comp = COMPETENCES.find(c=>c.id===cId);
+      const gCov = isGlobalCovered(cId);
+      const acts = activities.filter(a=>a.comps[cId]);
+      const names = acts.map(a=>a.name||'(sans nom)').join(', ');
+
+      comp.ops.forEach((op, oi) => {
+        const opData = opsChecked[cId][oi];
+        const opCov = gCov && opData.checked;
+        let resLabel = '';
+        if(opData.resource) {
+          resLabel = opData.resource==='autre support' && opData.resourceCustom
+            ? 'autre : '+opData.resourceCustom : opData.resource;
+        }
+        if (oi === 0) {
+          h += `<tr>
+            <td class="comp-global-cell" rowspan="${comp.ops.length}">${esc(comp.global)}</td>
+            <td class="check-cell ${gCov?'yes':'no'}" rowspan="${comp.ops.length}">${gCov?'☑':'☐'}</td>
+            <td class="comp-op-cell">– ${esc(op)}</td>
+            <td class="check-cell ${opCov?'yes':'no'}">${opCov?'☑':'☐'}</td>
+            <td class="activities-cell">${opCov?esc(names):''}</td>
+            <td class="resource-cell">${opCov?esc(resLabel):''}</td>
+          </tr>`;
+        } else {
+          h += `<tr>
+            <td class="comp-op-cell">– ${esc(op)}</td>
+            <td class="check-cell ${opCov?'yes':'no'}">${opCov?'☑':'☐'}</td>
+            <td class="activities-cell">${opCov?esc(names):''}</td>
+            <td class="resource-cell">${opCov?esc(resLabel):''}</td>
+          </tr>`;
+        }
+      });
+    });
+  });
+  h += '</tbody>';
+  t.innerHTML = h;
+}
+
+function v(id) { return document.getElementById(id).value; }
+function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+function showToast(m) {
+  const t=document.getElementById('toast'); t.textContent=m;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+function copyTable() {
+  const el=document.getElementById('output-section');
+  const r=document.createRange(); r.selectNodeContents(el);
+  const s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  document.execCommand('copy'); s.removeAllRanges();
+  showToast('Tableau copié');
+}
+
+['nom','prenom','numcandidat','academie','etablissement','session'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', updateOutput);
+});
+
+// Init avec une activité vide
+addActivity();
+</script>
+
+</body>
+</html>
