@@ -162,6 +162,22 @@
     width:14px; height:14px; accent-color:var(--accent); cursor:pointer;
   }
   .op-row { margin-bottom:4px; }
+  .op-activities-row {
+    display:flex; flex-wrap:wrap; gap:5px; align-items:center;
+    padding:4px 0 2px 32px;
+  }
+  .op-activities-label {
+    font-size:0.72rem; color:var(--text-muted); font-weight:500; margin-right:2px;
+  }
+  .act-check {
+    display:flex; align-items:center; gap:4px;
+    padding:3px 8px; border-radius:14px;
+    border:1px solid var(--border); background:var(--surface);
+    cursor:pointer; font-size:0.72rem; user-select:none;
+    transition:all 0.15s;
+  }
+  .act-check input { display:none; }
+  .act-check.checked { background:#1e40af; color:white; border-color:#1e40af; }
   .op-resource-row {
     display:flex; flex-wrap:wrap; gap:5px; align-items:center;
     padding:4px 0 6px 32px;
@@ -437,7 +453,7 @@ let nextId = 1;
 let opsChecked = {};
 COMPETENCES.forEach(c => {
   opsChecked[c.id] = {};
-  c.ops.forEach((_, i) => { opsChecked[c.id][i] = { checked:false, resources:[], resourceCustom:'' }; });
+  c.ops.forEach((_, i) => { opsChecked[c.id][i] = { checked:false, activityIds:[], resources:[], resourceCustom:'' }; });
 });
 
 function addActivity(name='', comps={c1:false,c2:false,c3:false,c4:false,c5:false}) {
@@ -492,19 +508,42 @@ function renderOpsDetail() {
   container.innerHTML = '';
   COMPETENCES.forEach(comp => {
     const covered = isGlobalCovered(comp.id);
+    const relatedActs = activities.filter(a => a.comps[comp.id]);
     const grp = document.createElement('div');
     grp.className = 'ops-group' + (covered ? '' : ' inactive');
     let html = `<div class="ops-group-label ${comp.id}">${esc(comp.global)}${covered ? '' : ' – non couverte'}</div>`;
     comp.ops.forEach((op, i) => {
       const opData = opsChecked[comp.id][i];
       const checked = opData.checked && covered;
+      // Auto-select si une seule activité
+      if(checked && relatedActs.length === 1 && opData.activityIds.length === 0) {
+        opData.activityIds = [relatedActs[0].id];
+      }
+      // Nettoyer les ids d'activités qui ne sont plus liées
+      opData.activityIds = opData.activityIds.filter(aid => relatedActs.some(a => a.id === aid));
+
       html += `<div class="op-row">
         <label class="op-check-label">
           <input type="checkbox" ${checked?'checked':''} ${covered?'':'disabled'}
                  onchange="togOp('${comp.id}',${i},this.checked)">
           – ${esc(op)}
-        </label>
-        ${checked ? `<div class="op-resource-row">
+        </label>`;
+
+      if(checked) {
+        // Sélection des activités (si plus d'une activité liée à la compétence globale)
+        if(relatedActs.length > 1) {
+          html += `<div class="op-activities-row">
+            <span class="op-activities-label">Activités :</span>
+            ${relatedActs.map(a => {
+              const isOn = opData.activityIds.includes(a.id);
+              return `<div class="act-check ${isOn?'checked':''}" onclick="togOpAct('${comp.id}',${i},${a.id},this)">
+                <input type="checkbox" ${isOn?'checked':''}>${esc(a.name||'(sans nom)')}
+              </div>`;
+            }).join('')}
+          </div>`;
+        }
+        // Ressources
+        html += `<div class="op-resource-row">
           ${RESOURCE_TYPES.map(r => {
             const isOn = opData.resources.includes(r);
             return `<div class="res-check ${isOn?'checked':''}" onclick="togOpRes('${comp.id}',${i},'${r}',this)">
@@ -514,8 +553,10 @@ function renderOpsDetail() {
           ${opData.resources.includes('autre support')?`<input type="text" class="resource-custom-sm" value="${esc(opData.resourceCustom||'')}"
                  placeholder="Précisez…"
                  oninput="updOpResCustom('${comp.id}',${i},this.value)">`:''}
-        </div>` : ''}
-      </div>`;
+        </div>`;
+      }
+
+      html += `</div>`;
     });
     grp.innerHTML = html;
     container.appendChild(grp);
@@ -524,7 +565,16 @@ function renderOpsDetail() {
 
 function togOp(cId, idx, val) {
   opsChecked[cId][idx].checked = val;
-  if(!val) { opsChecked[cId][idx].resources = []; opsChecked[cId][idx].resourceCustom = ''; }
+  if(!val) { opsChecked[cId][idx].activityIds = []; opsChecked[cId][idx].resources = []; opsChecked[cId][idx].resourceCustom = ''; }
+  renderOpsDetail();
+  updateOutput();
+}
+
+function togOpAct(cId, idx, actId, el) {
+  const opData = opsChecked[cId][idx];
+  const pos = opData.activityIds.indexOf(actId);
+  if(pos > -1) { opData.activityIds.splice(pos, 1); }
+  else { opData.activityIds.push(actId); }
   renderOpsDetail();
   updateOutput();
 }
@@ -610,11 +660,18 @@ function updateOutput() {
       const comp = COMPETENCES.find(c=>c.id===cId);
       const gCov = isGlobalCovered(cId);
       const acts = activities.filter(a=>a.comps[cId]);
-      const names = acts.map(a=>a.name||'(sans nom)').join(', ');
 
       comp.ops.forEach((op, oi) => {
         const opData = opsChecked[cId][oi];
         const opCov = gCov && opData.checked;
+        // Activités sélectionnées pour cette compétence opérationnelle
+        let opActNames = '';
+        if(opCov) {
+          const selectedActs = opData.activityIds.length
+            ? activities.filter(a => opData.activityIds.includes(a.id))
+            : acts; // fallback si aucune sélection (1 seule activité)
+          opActNames = selectedActs.map(a => a.name||'(sans nom)').join(', ');
+        }
         let resLabel = '';
         if(opData.resources && opData.resources.length) {
           resLabel = opData.resources.map(r => {
@@ -628,14 +685,14 @@ function updateOutput() {
             <td class="check-cell ${gCov?'yes':'no'}" rowspan="${comp.ops.length}">${gCov?'☑':'☐'}</td>
             <td class="comp-op-cell">– ${esc(op)}</td>
             <td class="check-cell ${opCov?'yes':'no'}">${opCov?'☑':'☐'}</td>
-            <td class="activities-cell">${opCov?esc(names):''}</td>
+            <td class="activities-cell">${esc(opActNames)}</td>
             <td class="resource-cell">${opCov?esc(resLabel):''}</td>
           </tr>`;
         } else {
           h += `<tr>
             <td class="comp-op-cell">– ${esc(op)}</td>
             <td class="check-cell ${opCov?'yes':'no'}">${opCov?'☑':'☐'}</td>
-            <td class="activities-cell">${opCov?esc(names):''}</td>
+            <td class="activities-cell">${esc(opActNames)}</td>
             <td class="resource-cell">${opCov?esc(resLabel):''}</td>
           </tr>`;
         }
